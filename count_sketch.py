@@ -2,8 +2,8 @@ import GPy
 # import matlab.engine
 import numpy as np
 from pyDOE import lhs
-import functions
-from REMBO import EI
+from hesbo.REMBO import EI
+import hesbo.functions as functions
 import timeit
 
 def dim_sampling(low_dim, X, bx_size):
@@ -40,9 +40,9 @@ def back_projection(low_obs, high_to_low, sign, bx_size):
             elif high_obs[i][j] < -bx_size: high_obs[i][j] = -bx_size
     return high_obs
 
-def RunMain(low_dim=2, high_dim=25, initial_n=20, total_itr=100, func_type='Branin',
+def RunMain(low_dim=2, high_dim=25, initial_n=20, total_itr=100, func_type='Branin', func=None,
             s=None, active_var=None, ARD=False, variance=1., length_scale=None, box_size=None,
-            high_to_low=None, sign=None, hyper_opt_interval=20, noise_var=0):
+            high_to_low=None, sign=None, hyper_opt_interval=20, noise_var=0, verbose=True):
     """
 
     :param high_dim: the dimension of high dimensional search space
@@ -96,8 +96,10 @@ def RunMain(low_dim=2, high_dim=25, initial_n=20, total_itr=100, func_type='Bran
     # Creating the initial points. The shape of s is nxD
     if s is None:
         s=lhs(low_dim, initial_n) * 2 * box_size - box_size
-    f_s = test_func.evaluate(back_projection(s,high_to_low,sign,box_size))
-    f_s_true = test_func.evaluate_true(back_projection(s,high_to_low,sign,box_size))
+    # f_s = test_func.evaluate(back_projection(s,high_to_low,sign,box_size))
+    # f_s_true = test_func.evaluate_true(back_projection(s,high_to_low,sign,box_size))
+    f_s = func(back_projection(s,high_to_low,sign,box_size))
+    f_s_true = func(back_projection(s,high_to_low,sign,box_size))
     for i in range(initial_n):
         best_results[0,i]=np.max(f_s_true[0:i+1])
 
@@ -125,11 +127,17 @@ def RunMain(low_dim=2, high_dim=25, initial_n=20, total_itr=100, func_type='Bran
         # Adding the new point to our sample
         s = np.append(s, [D[index]], axis=0)
         new_high_point=back_projection(D[index],high_to_low,sign,box_size)
-        f_s = np.append(f_s, test_func.evaluate(new_high_point), axis=0)
-        f_s_true = np.append(f_s_true, test_func.evaluate_true(new_high_point), axis=0)
+        # f_s = np.append(f_s, test_func.evaluate(new_high_point), axis=0)
+        # f_s_true = np.append(f_s_true, test_func.evaluate_true(new_high_point), axis=0)
+
+        f_s = np.append(f_s, func(new_high_point), axis=0)
+        f_s_true = np.append(f_s_true, func(new_high_point), axis=0)
 
         stop = timeit.default_timer()
         best_results[0, i + initial_n] = np.max(f_s_true)
+        if i % 20 == 0:
+            if verbose:
+                print(f"[{i}], best value: {np.max(f_s_true)}")
         elapsed[0, i + initial_n]=stop-start
 
     # if func_type == 'WalkerSpeed':
