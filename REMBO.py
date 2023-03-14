@@ -4,10 +4,10 @@ import numpy as np
 import math
 from pyDOE import lhs
 from scipy.stats import norm
-import functions
-import projection_matrix
-import projections
-import kernel_inputs
+import hesbo.functions
+import hesbo.projection_matrix
+import hesbo.projections
+import hesbo.kernel_inputs
 import timeit
 
 def EI(D_size,f_max,mu,var):

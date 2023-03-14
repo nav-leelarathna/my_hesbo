@@ -1,5 +1,5 @@
 import numpy as np
-import projections
+import hesbo.projections
 
 class InputY:
     def __init__(self, A):
